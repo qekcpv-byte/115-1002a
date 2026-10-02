@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix 😇閱讀理解困難診斷",
+  "description": "數學教育專家專屬：依數學單元主題進行數學閱讀理解困難來源深度診斷、三維度教學設計、教學導向分類表、20分鐘補救教學教案、診斷小考題與可編輯文件Canvas互動工作板。",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
