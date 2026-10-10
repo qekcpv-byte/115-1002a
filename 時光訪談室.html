@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>時光訪談室 - 與歷史巨人跨時空對話</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React and ReactDOM CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel Standalone for JSX compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Serif TC', serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .serif-title {
+            font-family: 'Noto Serif TC', serif;
+        }
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(217, 119, 6, 0.5);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(217, 119, 6, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Custom SVG Icons to avoid external runtime bundler dependency issues ---
+        const IconHistory = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+                <path d="M12 7v5l4 2"/>
+            </svg>
+        );
+
+        const IconSparkles = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+            </svg>
+        );
+
+        const IconUser = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+        );
+
+        const IconAward = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <circle cx="12" cy="8" r="6"/>
+                <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+            </svg>
+        );
+
+        const IconQuote = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 2v6c0 1.25.75 2 2 2h3c0 4-2 6-4 6z"/>
+                <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2h-4c-1.25 0-2 .75-2 2v6c0 1.25.75 2 2 2h3c0 4-2 6-4 6z"/>
+            </svg>
+        );
+
+        const IconSend = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+        );
+
+        const IconArrowLeft = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <line x1="19" y1="12" x2="5" y2="12"/>
+                <polyline points="12 19 5 12 12 5"/>
+            </svg>
+        );
+
+        const IconLoader = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`animate-spin ${className}`}>
+                <line x1="12" y1="2" x2="12" y2="6"/>
+                <line x1="12" y1="18" x2="12" y2="22"/>
+                <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+                <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+                <line x1="2" y1="12" x2="6" y2="12"/>
+                <line x1="18" y1="12" x2="22" y2="12"/>
+                <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+                <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+            </svg>
+        );
+
+        const IconVolume = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+        );
+
+        const apiKey = ""; // Canvas runtime environment provides API key automatically
+        const MODEL_NAME = "gemini-3-flash-preview";
+
+        const PRESET_FIGURES = {
+            "孔子": {
+                id: "confucius",
+                name: "孔子",
+                title: "至聖先師",
+                avatar: "📜",
+                bio: "名丘，字仲尼。春秋時期魯國人。中國古代偉大的思想家、教育家，儒家學派創始人。周遊列國十四年，晚年修訂六經，弟子三千，賢人七十二。",
+                achievements: [
+                    "開創儒家學派，影響東亞文化兩千多年",
+                    "首創私學，提倡「有教無類」與「因材施教」",
+                    "修訂《詩》、《書》、《禮》、《樂》、《易》、《春秋》"
+                ],
+                quotes: [
+                    "學而時習之，不亦說乎？",
+                    "三人行，必有我師焉。",
+                    "己所不欲，勿施於人。"
+                ],
+                suggestedQuestions: [
+                    "您認為什麼是「仁」的最高境界？",
+                    "在現代競爭激烈的社會，我們該如何保持心中的安寧？",
+                    "您當年周遊列國屢屢受挫，是什麼支撐著您堅持信念？",
+                    "對於不想學習或感到迷茫的學生，您會給什麼建議？"
+                ],
+                tone: "溫文儒雅，充滿哲理，文質彬彬，喜歡用謙遜的反問或生動的比喻，引經據典。",
+                welcomeMessage: "有朋自遠方來，不亦樂乎？後生晚輩，今日跨越時空來訪，所為何事？"
+            },
+            "愛因斯坦": {
+                id: "einstein",
+                name: "愛因斯坦",
+                title: "現代物理學之父",
+                avatar: "⚛️",
+                bio: "阿爾伯特·愛因斯坦，生於德國，猶太裔理論物理學家。創立了相對論，對量子力學的建立也有重大貢獻。1921年獲諾貝爾物理學獎。",
+                achievements: [
+                    "創立狹義相對論與廣義相對論",
+                    "提出質能等價公式 E=mc²",
+                    "解釋光電效應，奠定量子物理基石"
+                ],
+                quotes: [
+                    "想像力比知識更重要。",
+                    "我沒有什麼特別的天賦，我只是充滿了強烈的好奇心。",
+                    "瘋狂就是重複做同樣的事情，還期待不同的結果。"
+                ],
+                suggestedQuestions: [
+                    "您是如何在專利局工作時想出相對論的？",
+                    "您認為科學發展與人類道德倫理應該如何平衡？",
+                    "對於現在量子計算與人工智慧的發展，您有什麼看法？",
+                    "如果能給現代年輕科學家一個建議，那會是什麼？"
+                ],
+                tone: "幽默、謙虛，帶有科學家無窮的好奇心，偶爾顯得調皮且具哲學深度，喜歡用直觀日常的比喻說明複雜原理。",
+                welcomeMessage: "你好！我正在思考時間與空間的彎曲，不過我很樂意停下來和你聊聊。你想探討光速、宇宙還是靈感？"
+            },
+            "居禮夫人": {
+                id: "curie",
+                name: "居禮夫人",
+                title: "放射性研究先驅",
+                avatar: "🧪",
+                bio: "瑪麗·居禮，波蘭裔法國物理學家、化學家。她是首位獲得諾貝爾獎的女性，也是唯一在兩個不同科學領域（物理、化學）獲獎的傳奇科學家。",
+                achievements: [
+                    "發現元素釙（Polonium）與鐳（Radium）",
+                    "開創放射性（Radioactivity）理論與提純技術",
+                    "兩度獲得諾貝爾獎 (1903物理獎、1911化學獎)"
+                ],
+                quotes: [
+                    "生活中沒有什麼可怕的東西，只有需要理解的東西。",
+                    "我們必須有恆心，尤其要有自信力。",
+                    "人類看不見的世界，往往比看得見的更重要。"
+                ],
+                suggestedQuestions: [
+                    "身為女性科學家，在當時極度艱難的環境下您是如何堅持下來的？",
+                    "在棚屋中長時間提煉鐳的過程有多艱辛？",
+                    "您為何決定放棄提純鐳的專利，將研究成果無償獻給全人類？",
+                    "給現代追求夢想的女性一句鼓勵的話？"
+                ],
+                tone: "堅定、冷靜、實事求是，充滿對科學事業的奉獻熱情，語氣真誠且富含無畏的毅力。",
+                welcomeMessage: "探索未知的道路從來都不輕鬆，但只要心中有火，就能照亮黑暗。你想聊聊化學實驗還是堅持夢想的信念？"
+            },
+            "秦始皇": {
+                id: "qin",
+                name: "秦始皇",
+                title: "千古一帝",
+                avatar: "👑",
+                bio: "嬴政，秦莊襄王之子。中國歷史上第一位使用「皇帝」稱號的君主。他掃平六國，結束春秋戰國長達數百年的割據分裂，建立了中央集權的大一統帝國。",
+                achievements: [
+                    "統一六國，建立中國第一個大一統帝國",
+                    "推行書同文、車同軌、統一度量衡與貨幣",
+                    "修築萬里長城、靈渠與秦直道"
+                ],
+                quotes: [
+                    "朕為始皇帝。後世以計數，二世三世至於萬世，傳之無窮。",
+                    "功過是非，留待後人評說。",
+                    "天下共苦戰鬥不休，以有侯王。"
+                ],
+                suggestedQuestions: [
+                    "您當年是以何種戰略與決心在短短十年間吞併六國的？",
+                    "後世常稱您為「暴君」，您如何看待這個評價？",
+                    "統一度量衡與文字對帝國的長治久安有何重要意義？",
+                    "站在阿房宮俯瞰萬民時，您內心最真實的想法是什麼？"
+                ],
+                tone: "威嚴霸氣，目光遠大，語氣帶著帝王獨尊的聲勢（自稱朕或寡人），重視秩序、效率與後世千秋功業。",
+                welcomeMessage: "朕掃六合，統一天下，開千秋未有之基業！後世之人，竟能穿梭時空直視朕？允你提問，且看你有何真知灼見！"
+            },
+            "諸葛亮": {
+                id: "zhuge",
+                name: "諸葛亮",
+                title: "臥龍先生 / 蜀漢丞相",
+                avatar: "🪶",
+                bio: "字孔明，號臥龍。三國時期蜀漢丞相，傑出的政治家、軍事家、文學家、發明家。劉備三顧茅廬而出山，輔佐蜀漢三分天下。",
+                achievements: [
+                    "提出《隆中對》，開創三國鼎立大局",
+                    "主持蜀漢政務，推行法治，振興經濟與興勢",
+                    "撰寫《出師表》，發明木牛流馬與連弩"
+                ],
+                quotes: [
+                    "鞠躬盡瘁，死後已。",
+                    "非淡泊無以明志，非寧靜無以致遠。",
+                    "勿以惡小而為之，勿以善小而不為。"
+                ],
+                suggestedQuestions: [
+                    "當年劉備三顧茅廬時，是什麼打動了您決定出山？",
+                    "六出祁山北伐，面對強大的曹魏，您心中最大的遺憾是什麼？",
+                    "您是如何在極度忙碌的軍國大事中保持沉靜心境的？",
+                    "對於現代管理者，您有哪些關於人才提拔與領導的建議？"
+                ],
+                tone: "謙虛謹慎，智謀深遠，關懷天下蒼生，語氣溫潤而帶有堅定不移的忠義之志。",
+                welcomeMessage: "亮深居隆中之日，未敢忘天下蒼生。後世足下前來，想必有所指教。請坐，亮願聞其詳。"
+            }
+        };
+
+        const GENERIC_TEMPLATE = {
+            bio: "時光通道暫時無法讀取完整記載，但該人物的思想與意識已在時空中獲得感應...",
+            achievements: ["時空歷史記載中的傳奇人物"],
+            quotes: ["歷史如鏡，照見古今。"],
+            suggestedQuestions: ["請問您一生中最難忘的時刻是什麼？", "您對我們這個時代有什麼看法？"],
+            tone: "禮貌、客觀、帶有深厚歷史感。",
+            welcomeMessage: "（時光訊號連線成功）...你好，我是遠古時空傳來的思想迴響。請說，你想了解什麼？"
+        };
+
+
+        async function callGeminiAPI(payload, isJsonMode = false) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+            
+            const requestBody = { ...payload };
+
+            if (isJsonMode) {
+                requestBody.generationConfig = {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            bio: { type: "STRING" },
+                            title: { type: "STRING" },
+                            avatar: { type: "STRING" },
+                            achievements: { type: "ARRAY", items: { type: "STRING" } },
+                            quotes: { type: "ARRAY", items: { type: "STRING" } },
+                            suggestedQuestions: { type: "ARRAY", items: { type: "STRING" } },
+                            tone: { type: "STRING" },
+                            welcomeMessage: { type: "STRING" }
+                        },
+                        required: ["bio", "title", "achievements", "quotes", "suggestedQuestions", "tone", "welcomeMessage"]
+                    }
+                };
+            }
+
+            let retries = 0;
+            const maxRetries = 3;
+            
+            while (retries <= maxRetries) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API Request Error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    retries++;
+                    if (retries > maxRetries) throw error;
+                    await new Promise(r => setTimeout(r, 1000 * Math.pow(2, retries)));
+                }
+            }
+        }
+
+
+        function HistoryChatApp() {
+            const [view, setView] = useState('home'); // 'home' | 'interview'
+            const [selectedFigure, setSelectedFigure] = useState(null);
+            const [customName, setCustomName] = useState('');
+            const [messages, setMessages] = useState([]);
+            const [inputValue, setInputValue] = useState('');
+            const [isTyping, setIsTyping] = useState(false);
+            const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
+            const [speakingMsgId, setSpeakingMsgId] = useState(null);
+            const messagesEndRef = useRef(null);
+
+            const scrollToBottom = () => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            };
+
+            useEffect(() => {
+                scrollToBottom();
+            }, [messages, isTyping]);
+
+            // Speech synthesis support for interactive voices
+            const speakText = (text, id) => {
+                if (!('speechSynthesis' in window)) return;
+                window.speechSynthesis.cancel();
+
+                if (speakingMsgId === id) {
+                    setSpeakingMsgId(null);
+                    return;
+                }
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-TW';
+                utterance.rate = 0.95;
+                utterance.onend = () => setSpeakingMsgId(null);
+                utterance.onerror = () => setSpeakingMsgId(null);
+
+                setSpeakingMsgId(id);
+                window.speechSynthesis.speak(utterance);
+            };
+
+            // Start Interview Session
+            const startInterview = (figureData) => {
+                setSelectedFigure(figureData);
+                setMessages([
+                    {
+                        id: 1,
+                        sender: 'system',
+                        text: `✨ 時空漩渦穩定，已成功連結至 ${figureData.name} (${figureData.title}) 的時代。`
+                    },
+                    {
+                        id: 2,
+                        sender: 'bot',
+                        text: figureData.welcomeMessage || "穿越者，你好。"
+                    }
+                ]);
+                setView('interview');
+            };
+
+            // Select Preset Figure
+            const handleSelectPreset = (name) => {
+                startInterview(PRESET_FIGURES[name]);
+            };
+
+            // Generate Profile for Custom Named Figure
+            const handleCustomStart = async (e) => {
+                e.preventDefault();
+                if (!customName.trim()) return;
+
+                const trimmedName = customName.trim();
+
+                if (PRESET_FIGURES[trimmedName]) {
+                    startInterview(PRESET_FIGURES[trimmedName]);
+                    return;
+                }
+
+                setIsGeneratingProfile(true);
+
+                try {
+                    const prompt = `請為歷史人物「${trimmedName}」生成一份詳細的繁體中文 (Traditional Chinese) 歷史檔案資料。
+                    如果此人是小說角色或虛構人物，請依據其作品背景進行角色設定。
+                    請包含：生平簡介 (bio)、稱號/頭銜 (title)、象徵Emoji (avatar)、三項重大成就 (achievements)、三句經典名言 (quotes)、四個有趣的訪談建議提問 (suggestedQuestions)、說話口吻描述 (tone)，以及一句符合性格的開場歡迎詞 (welcomeMessage)。`;
+
+                    const data = await callGeminiAPI({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    }, true);
+
+                    const generatedProfile = JSON.parse(data.candidates[0].content.parts[0].text);
+                    
+                    const newFigure = {
+                        id: 'custom-' + Date.now(),
+                        name: trimmedName,
+                        avatar: generatedProfile.avatar || '👤',
+                        ...generatedProfile
+                    };
+
+                    startInterview(newFigure);
+
+                } catch (error) {
+                    console.error("Profile generation error:", error);
+                    const fallbackFigure = {
+                        id: 'fallback-' + Date.now(),
+                        name: trimmedName,
+                        title: '時空人物',
+                        avatar: '📜',
+                        ...GENERIC_TEMPLATE,
+                        bio: `關於 ${trimmedName} 的檔案已在歷史長河中感應建立，現在您可以開始進行對話。`
+                    };
+                    startInterview(fallbackFigure);
+                } finally {
+                    setIsGeneratingProfile(false);
+                }
+            };
+
+            // Generate Roleplay Response using Gemini 3 Flash
+            const generateAIResponse = async (userText, figure, currentHistory) => {
+                try {
+                    const recentHistory = currentHistory
+                        .filter(msg => msg.sender === 'user' || msg.sender === 'bot')
+                        .slice(-8)
+                        .map(msg => ({
+                            role: msg.sender === 'user' ? 'user' : 'model',
+                            parts: [{ text: msg.text }]
+                        }));
+
+                    const systemPrompt = `你現在完全扮演歷史人物「${figure.name}」（頭銜：${figure.title}）。
+生平背景：${figure.bio}
+性格口吻：${figure.tone}
+豐功偉業：${(figure.achievements || []).join(", ")}
+
+核心要求：
+1. 必須完全沉浸在 ${figure.name} 的角色中，用符合該時代與性格的口吻回答。
+2. 使用繁體中文回答，表達自然流暢、充滿智慧與個性。
+3. 保持簡潔而有深度（約 100-250 字）。
+4. 如果用戶問及現代事物（如智慧型手機、網際網路等），請以該時代人物的角度表現出好奇、困惑或獨特的哲學見解。
+5. 絕對不要脫離角色，嚴禁說明自己是 AI 或語言模型。`;
+
+                    const payload = {
+                        systemInstruction: {
+                            parts: [{ text: systemPrompt }]
+                        },
+                        contents: [
+                            ...recentHistory,
+                            { role: 'user', parts: [{ text: userText }] }
+                        ]
+                    };
+
+                    const data = await callGeminiAPI(payload);
+                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    return text || "（時空風暴干擾，請再說一次...）";
+
+                } catch (error) {
+                    console.error("AI response generation error:", error);
+                    return "（時空波障影響，對話訊號暫時受阻...）";
+                }
+            };
+
+            // Send User Message
+            const handleSendMessage = async (text) => {
+                if (!text.trim() || isTyping) return;
+
+                const newUserMsg = { id: Date.now(), sender: 'user', text: text };
+                const updatedMessages = [...messages, newUserMsg];
+                setMessages(updatedMessages);
+                setInputValue('');
+                setIsTyping(true);
+
+                const responseText = await generateAIResponse(text, selectedFigure, updatedMessages);
+                
+                const newBotMsg = { id: Date.now() + 1, sender: 'bot', text: responseText };
+                setMessages(prev => [...prev, newBotMsg]);
+                setIsTyping(false);
+            };
+
+            if (view === 'home') {
+                return (
+                    <div className="min-h-screen bg-slate-950 font-sans text-slate-100 p-4 md:p-8 flex flex-col items-center justify-between">
+                        {/* Header Header */}
+                        <header className="mt-6 mb-10 text-center max-w-3xl">
+                            <div className="inline-flex items-center justify-center bg-gradient-to-tr from-amber-600 to-amber-400 p-4 rounded-2xl text-slate-950 shadow-xl shadow-amber-500/10 mb-5">
+                                <IconHistory size={40} />
+                            </div>
+                            <h1 className="text-4xl md:text-6xl font-extrabold mb-4 serif-title tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100">
+                                時光訪談室
+                            </h1>
+                            <p className="text-slate-400 text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
+                                穿越歲月長河，與歷代巨人深度對話。輸入任意歷史人物姓名，或選擇精選名冊，即刻展開跨越時空的對話。
+                            </p>
+                        </header>
+
+                        <main className="w-full max-w-5xl space-y-10 mb-12">
+                            {/* Custom Figure Input Box */}
+                            <section className="bg-slate-900/80 backdrop-blur-md p-6 md:p-8 rounded-3xl border border-amber-500/20 shadow-2xl relative overflow-hidden">
+                                <div className="absolute -top-24 -right-24 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                                <h2 className="text-xl font-bold mb-4 flex items-center text-amber-300">
+                                    <IconSparkles className="mr-2.5 text-amber-400" size={22} /> 
+                                    召喚任意歷史人物
+                                </h2>
+                                <form onSubmit={handleCustomStart} className="flex flex-col sm:flex-row gap-3 relative z-10">
+                                    <input
+                                        type="text"
+                                        placeholder="輸入你想訪談的人物 (例如：蘇格拉底、李白、亞歷山大大帝、林徽因...)"
+                                        className="flex-1 px-5 py-4 bg-slate-950/80 border border-slate-700/80 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:outline-none text-slate-100 placeholder-slate-500 text-base"
+                                        value={customName}
+                                        onChange={(e) => setCustomName(e.target.value)}
+                                        disabled={isGeneratingProfile}
+                                    />
+                                    <button 
+                                        type="submit"
+                                        disabled={isGeneratingProfile || !customName.trim()}
+                                        className={`px-8 py-4 rounded-2xl font-bold transition-all duration-300 flex items-center justify-center shadow-lg min-w-[180px] ${
+                                            isGeneratingProfile || !customName.trim()
+                                                ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                                                : 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-slate-950 shadow-amber-500/20 transform hover:-translate-y-0.5'
+                                        }`}
+                                    >
+                                        {isGeneratingProfile ? (
+                                            <>
+                                                <IconLoader className="mr-2" size={20} />
+                                                開啟時光通道...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <IconSparkles size={18} className="mr-2" />
+                                                啟動訪談
+                                            </>
+                                        )}
+                                    </button>
+                                </form>
+                                <p className="mt-3 text-xs text-slate-400 flex items-center">
+                                    <span className="w-1.5 h-1.5 bg-amber-400 rounded-full mr-2 animate-ping"></span>
+                                    AI 將即時構建該歷史人物的生平、口吻與思想風格。
+                                </p>
+                            </section>
+
+                            {/* Preset Figures Selection */}
+                            <section>
+                                <h2 className="text-xl font-bold mb-6 flex items-center text-slate-300">
+                                    <IconUser className="mr-2.5 text-amber-400" size={22} /> 
+                                    精選時空名冊
+                                </h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {Object.values(PRESET_FIGURES).map((figure) => (
+                                        <div 
+                                            key={figure.id}
+                                            onClick={() => handleSelectPreset(figure.name)}
+                                            className="bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/50 cursor-pointer transition-all duration-300 transform hover:-translate-y-1.5 rounded-3xl p-6 shadow-xl flex flex-col justify-between group"
+                                        >
+                                            <div>
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <span className="text-4xl p-3 bg-slate-950 rounded-2xl border border-slate-800 group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                                                        {figure.avatar}
+                                                    </span>
+                                                    <span className="text-xs font-semibold px-3 py-1 bg-amber-500/10 text-amber-400 rounded-full border border-amber-500/20">
+                                                        {figure.title}
+                                                    </span>
+                                                </div>
+                                                <h3 className="text-2xl font-bold text-slate-100 mb-2 serif-title">{figure.name}</h3>
+                                                <p className="text-slate-400 text-sm line-clamp-3 leading-relaxed mb-4">
+                                                    {figure.bio}
+                                                </p>
+                                            </div>
+
+                                            <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-amber-400 text-sm font-semibold group-hover:text-amber-300">
+                                                <span>開啟對話</span>
+                                                <span className="transform group-hover:translate-x-1 transition-transform">→</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        </main>
+
+                        <footer className="text-center text-xs text-slate-500 pb-4">
+                            時光訪談室 &copy; 由 Gemini 3 Flash 提供高擬真角色模型驅動
+                        </footer>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="h-screen bg-slate-950 flex flex-col md:flex-row overflow-hidden font-sans">
+                    {/* Sidebar: Historical Figure Bio & Quotes */}
+                    <aside className="w-full md:w-80 lg:w-96 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl z-20 flex-shrink-0">
+                        {/* Header bar */}
+                        <div className="p-5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+                            <button 
+                                onClick={() => {
+                                    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                                    setView('home');
+                                }} 
+                                className="text-slate-400 hover:text-slate-100 transition-colors flex items-center text-sm font-medium bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700"
+                            >
+                                <IconArrowLeft size={16} className="mr-1.5" /> 結束對話
+                            </button>
+                            <div className="flex items-center gap-2">
+                                <span className="text-2xl">{selectedFigure.avatar}</span>
+                                <div>
+                                    <h2 className="font-bold text-base text-slate-100 serif-title">{selectedFigure.name}</h2>
+                                    <p className="text-xs text-amber-400">{selectedFigure.title}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Profile Info Details */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                            <section className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+                                <h3 className="text-amber-400 font-bold mb-2 flex items-center uppercase tracking-wider text-xs">
+                                    <IconUser size={14} className="mr-2" /> 生平事蹟
+                                </h3>
+                                <p className="text-slate-300 leading-relaxed text-xs text-justify">
+                                    {selectedFigure.bio}
+                                </p>
+                            </section>
+
+                            <section className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+                                <h3 className="text-amber-400 font-bold mb-2.5 flex items-center uppercase tracking-wider text-xs">
+                                    <IconAward size={14} className="mr-2" /> 豐功偉業
+                                </h3>
+                                <ul className="space-y-2">
+                                    {selectedFigure.achievements.map((item, idx) => (
+                                        <li key={idx} className="flex items-start text-xs text-slate-300">
+                                            <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
+                                            <span className="leading-normal">{item}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </section>
+
+                            <section className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+                                <h3 className="text-amber-400 font-bold mb-2.5 flex items-center uppercase tracking-wider text-xs">
+                                    <IconQuote size={14} className="mr-2" /> 名言警句
+                                </h3>
+                                <div className="space-y-2.5">
+                                    {selectedFigure.quotes.map((quote, idx) => (
+                                        <blockquote key={idx} className="border-l-2 border-amber-500/50 pl-3 italic text-slate-400 text-xs leading-relaxed">
+                                            "{quote}"
+                                        </blockquote>
+                                    ))}
+                                </div>
+                            </section>
+                        </div>
+                    </aside>
+
+                    {/* Main Chat Area */}
+                    <main className="flex-1 flex flex-col bg-slate-950 relative overflow-hidden">
+                        {/* Subtle ambient light gradient background */}
+                        <div className="absolute top-0 right-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+                        {/* Messages Feed */}
+                        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-5 custom-scrollbar relative z-10">
+                            {messages.map((msg) => (
+                                <div 
+                                    key={msg.id} 
+                                    className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                                >
+                                    {msg.sender !== 'user' && msg.sender !== 'system' && (
+                                        <div className="w-10 h-10 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-xl mr-3 shadow-md flex-shrink-0 self-start">
+                                            {selectedFigure.avatar}
+                                        </div>
+                                    )}
+                                    
+                                    <div className="group relative max-w-[85%] md:max-w-[75%]">
+                                        <div 
+                                            className={`p-4 rounded-3xl text-sm md:text-base leading-relaxed shadow-lg ${
+                                                msg.sender === 'user' 
+                                                    ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-slate-950 font-medium rounded-tr-none' 
+                                                    : msg.sender === 'system'
+                                                    ? 'bg-slate-900/80 text-amber-400 border border-amber-500/20 text-xs text-center w-full mx-auto my-3 shadow-none rounded-2xl'
+                                                    : 'bg-slate-900 text-slate-100 rounded-tl-none border border-slate-800/90'
+                                            }`}
+                                        >
+                                            {msg.text}
+                                        </div>
+
+                                        {/* Speech synthesis button for AI replies */}
+                                        {msg.sender === 'bot' && (
+                                            <button
+                                                onClick={() => speakText(msg.text, msg.id)}
+                                                title="朗讀回應"
+                                                className={`mt-1.5 ml-2 p-1.5 rounded-full transition-colors text-xs inline-flex items-center gap-1 ${
+                                                    speakingMsgId === msg.id 
+                                                        ? 'bg-amber-500/20 text-amber-400 animate-pulse' 
+                                                        : 'text-slate-500 hover:text-slate-300'
+                                                }`}
+                                            >
+                                                <IconVolume size={14} />
+                                                {speakingMsgId === msg.id ? "朗讀中..." : ""}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                            
+                            {/* Typing Animation */}
+                            {isTyping && (
+                                <div className="flex justify-start items-center">
+                                    <div className="w-10 h-10 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-xl mr-3 flex-shrink-0">
+                                        {selectedFigure.avatar}
+                                    </div>
+                                    <div className="bg-slate-900 p-4 rounded-3xl rounded-tl-none border border-slate-800 shadow-md flex items-center gap-1.5">
+                                        <span className="w-2 h-2 bg-amber-400 rounded-full animate-bounce"></span>
+                                        <span className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></span>
+                                        <span className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></span>
+                                    </div>
+                                </div>
+                            )}
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        {/* Bottom Question Prompt Suggestions & Input Field */}
+                        <div className="bg-slate-900/90 border-t border-slate-800/80 p-4 relative z-10 backdrop-blur-md">
+                            {/* Suggested Questions Slider */}
+                            <div className="mb-3 overflow-x-auto flex gap-2 pb-2 custom-scrollbar">
+                                <div className="flex items-center text-xs font-bold text-amber-400 whitespace-nowrap px-1">
+                                    <IconSparkles size={14} className="mr-1" /> 建議提問:
+                                </div>
+                                {selectedFigure.suggestedQuestions.map((q, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleSendMessage(q)}
+                                        className="whitespace-nowrap px-3.5 py-1.5 rounded-full bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-amber-300 text-xs border border-slate-800 hover:border-amber-500/30 transition-all duration-200"
+                                    >
+                                        {q}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Message Input Form */}
+                            <div className="flex gap-2 items-center max-w-4xl mx-auto">
+                                <input
+                                    type="text"
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(inputValue)}
+                                    placeholder={`與 ${selectedFigure.name} 跨時空對話...`}
+                                    className="flex-1 px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-slate-100 placeholder-slate-500 text-sm md:text-base transition-all"
+                                />
+                                <button
+                                    onClick={() => handleSendMessage(inputValue)}
+                                    disabled={!inputValue.trim() || isTyping}
+                                    className={`p-3.5 rounded-2xl flex items-center justify-center transition-all shadow-lg ${
+                                        !inputValue.trim() || isTyping
+                                            ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                                            : 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold active:scale-95'
+                                    }`}
+                                >
+                                    <IconSend size={20} />
+                                </button>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<HistoryChatApp />);
+    </script>
+</body>
+</html>
