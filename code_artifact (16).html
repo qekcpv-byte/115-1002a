@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>五年級數學素養評量：單位分數的祕密</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        body { font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif; background-color: #f4f1ea; color: #333; overflow-x: hidden; }
+        
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .slide-up { animation: slideUp 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .card-pop-in { animation: cardPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes cardPopIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .tooltip-above { animation: popAbove 0.2s ease-out forwards; transform-origin: bottom center; }
+        @keyframes popAbove {
+            from { opacity: 0; transform: translateY(-100%) scale(0.95); }
+            to { opacity: 1; transform: translateY(-100%) scale(1); }
+        }
+        .tooltip-below { animation: popBelow 0.2s ease-out forwards; transform-origin: top center; }
+        @keyframes popBelow {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+
+        .interactive-word { cursor: pointer; position: relative; display: inline-block; transition: all 0.2s ease; border-bottom: 2px dashed #9ca3af; padding: 0 2px; margin: 0 2px; border-radius: 4px; }
+        .interactive-word:hover { background-color: #fef08a; border-bottom-color: #eab308; }
+        .rhetoric-word { cursor: pointer; position: relative; display: inline-block; transition: all 0.2s ease; border-radius: 4px; padding: 0 2px; }
+        .rhetoric-word:hover { background-color: #f3e8ff; }
+        .interactive-wrapper.active .interactive-word, .interactive-wrapper.active .rhetoric-word { background-color: #fde047; color: #854d0e; font-weight: bold; }
+        .interactive-wrapper.active.rhetoric-active .rhetoric-word { background-color: #e9d5ff; color: #581c87; }
+        .rhetoric-icon { font-size: 0.8em; vertical-align: super; margin-left: 2px; color: #9333ea; animation: pulse-purple 2s infinite; pointer-events: none;}
+        
+        @keyframes pulse-purple { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.1); } }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.15); border-radius: 10px; }
+
+        .arrow-down::after {
+            content: ''; position: absolute; bottom: -8px; left: var(--arrow-pos);
+            transform: translateX(-50%); border-width: 8px 8px 0; border-style: solid;
+            border-color: #2c2e33 transparent transparent transparent;
+        }
+        .arrow-up::after {
+            content: ''; position: absolute; top: -8px; left: var(--arrow-pos);
+            transform: translateX(-50%); border-width: 0 8px 8px; border-style: solid;
+            border-color: transparent transparent #2c2e33 transparent;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-presets="react,env">
+        /** @jsx React.createElement */
+        /** @jsxFrag React.Fragment */
+        
+        const { useState, useEffect, useRef } = React;
+
+        const FlashcardItem = ({ question, answer, icon, tag, isWarning }) => {
+            const [isFlipped, setIsFlipped] = useState(false);
+
+            return (
+                <div 
+                    className="group h-[22rem] md:h-80 perspective-1000 cursor-pointer card-pop-in w-full mx-auto"
+                    onClick={() => setIsFlipped(!isFlipped)}
+                >
+                    <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
+                        <div className="absolute inset-0 backface-hidden bg-white border-2 border-stone-200 rounded-[2rem] p-6 shadow-md flex flex-col items-center justify-center text-center hover:border-amber-400 hover:shadow-xl transition-all">
+                            <i className={`ph-fill ${icon} text-[4.5rem] md:text-[5rem] text-amber-500 mb-6`}></i>
+                            <h3 className="text-xl md:text-2xl font-bold text-stone-800 leading-snug">{question}</h3>
+                            <div className="mt-auto bg-stone-50 text-stone-400 text-xs px-4 py-1.5 rounded-full animate-pulse flex items-center gap-1 border border-stone-100">
+                                <i className="ph-bold ph-hand-tap"></i> 點擊翻開
+                            </div>
+                        </div>
+                        <div className={`absolute inset-0 backface-hidden rotate-y-180 rounded-[2rem] p-6 md:p-8 shadow-xl flex flex-col items-center justify-center text-center overflow-y-auto custom-scrollbar
+                            ${isWarning ? 'bg-rose-50 border-2 border-rose-300' : 'bg-amber-50 border-2 border-amber-300'}`}
+                        >
+                            <span className={`text-xs font-bold px-3 py-1 rounded-md mb-5 tracking-widest flex-shrink-0 ${isWarning ? 'bg-rose-200 text-rose-800' : 'bg-amber-200 text-amber-800'}`}>
+                                {tag}
+                            </span>
+                            <p className="text-[1.05rem] md:text-xl font-medium text-stone-800 leading-[1.8] whitespace-pre-line text-left md:text-center w-full">
+                                {answer}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const FlashcardSection = () => {
+            const cardData = [
+                { id: 1, question: "什麼是單位分數？", answer: "分子為1的分數叫做單位分數。\n例如 $\\frac{1}{2}$、$\\frac{1}{3}$、$\\frac{1}{4}$ 等，代表將整體平分成若干等份後取其中一份。", icon: "ph-fraction", tag: "數與量重點", isWarning: false },
+                { id: 2, question: "分數牆操作的關鍵原則是什麼？", answer: "1. 找出分母2至7的單位分數條。\n2. 由上到下呈現長到短排列。\n3. 所有分數條左邊必須互相對齊。", icon: "ph-rows", tag: "操作探究", isWarning: false },
+                { id: 3, question: "如何利用分數條找出相減關係？", answer: "例如 $\\frac{1}{2} - \\frac{1}{3} = \\frac{1}{6}$。\n透過通分找到共同分母，並觀察剩餘的灰色補齊分數條。", icon: "ph-calculator", tag: "通分應用", isWarning: false },
+                { id: 4, question: "單位分數差規律是什麼？", answer: "透過實驗發現：\n$\\frac{1}{3} - \\frac{1}{4} = \\frac{1}{12}$\n$\\frac{1}{4} - \\frac{1}{5} = \\frac{1}{20}$\n規律為 $\\frac{1}{n} - \\frac{1}{n+1} = \\frac{1}{n \\times (n+1)}$。", icon: "ph-trend-up", tag: "規律發現", isWarning: false },
+                { id: 5, question: "異分母分數加減法核心步驟？", answer: "1. 先觀察分母是否相同。\n2. 若不同則利用「擴分」或「通分」化為同分母。\n3. 分子相加減，分母維持不變，最後養成化簡習慣。", icon: "ph-warning-octagon", tag: "學習表現 n-III-4", isWarning: true },
+                { id: 6, question: "素養評量的五階段探究環形？", answer: "1. 情境 $\\rightarrow$ 2. 觀察 $\\rightarrow$ 3. 提想法 $\\rightarrow$ 4. 做試驗 $\\rightarrow$ 5. 下結論。\n培養創造力、批判性思考與系統性思維。", icon: "ph-circle-notch", tag: "素養核心", isWarning: false }
+            ];
+
+            return (
+                <div className="max-w-5xl mx-auto pb-10 slide-up px-2 mt-4 md:mt-8">
+                    <div className="text-center mb-8">
+                        <h2 className="text-2xl md:text-3xl font-bold text-stone-800 mb-2 flex items-center justify-center gap-2">
+                            <i className="ph-fill ph-cards text-amber-600"></i> 單位分數的祕密翻卡
+                        </h2>
+                        <p className="text-sm md:text-base text-stone-500">點擊卡片查看五年級數學素養與分數探究重點</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {cardData.map((card) => <FlashcardItem key={card.id} {...card} />)}
+                    </div>
+                </div>
+            );
+        };
+
+        const InteractiveReading = () => {
+            const mathData = [
+                {
+                    title: "探究一：分數牆與單位分數操作 (情境與觀察)",
+                    lines: [
+                        [
+                            { text: "在數學課操作" },
+                            { text: "分數牆", note: "將不同分母的單位分數條由上到下依長短排列並左邊對齊的學習工具。", pinyin: "ㄈㄣ ㄕㄨˋ ㄑㄧㄤˊ" },
+                            { text: "時，準備工作包含找出分母2至7的" },
+                            { text: "單位分數條", note: "分子為1、分母為正整數的分數條，如1/2、1/3等。", rhetoric: { name: "單位分數定義", desc: "把整體平分後取1份的分數，是建構所有分數的基礎。" } },
+                            { text: "。" }
+                        ],
+                        [
+                            { text: "透過拼接讓它們合起來的長度和上面已知長度一樣長，例如在" },
+                            { text: "$\\frac{1}{3}$" },
+                            { text: "後面接上一條灰色分數條，使其等於" },
+                            { text: "$\\frac{1}{2}$" },
+                            { text: "。" }
+                        ]
+                    ]
+                },
+                {
+                    title: "探究二：提想法與通分計算 (問題1與問題2)",
+                    lines: [
+                        [
+                            { text: "小誼的想法是利用減法算式" },
+                            { text: "$\\frac{1}{2} - \\frac{1}{3} = \\frac{1}{6}$", note: "透過通分將分母化為6，計算出相差的單位分數。", rhetoric: { name: "異分母減法", desc: "異分母分數相減必須先通分再相減，此處 $\\frac{3}{6} - \\frac{2}{6} = \\frac{1}{6}$。" } },
+                            { text: "來找到灰色分數條答案。" }
+                        ],
+                        [
+                            { text: "進一步觀察規律：" },
+                            { text: "$\\frac{1}{3} - \\frac{1}{4} = \\frac{1}{12}$", note: "分母3與4相乘得到12，分子為1。", pinyin: "ㄍㄨㄟ ㄌㄩˋ" },
+                            { text: "，以及" },
+                            { text: "$\\frac{1}{4} - \\frac{1}{5} = \\frac{1}{20}$", note: "相鄰單位分數相減，其分母為兩原分母的乘積。" },
+                            { text: "。" }
+                        ]
+                    ]
+                },
+                {
+                    title: "探究三：做試驗與規律應用 (問題3)",
+                    lines: [
+                        [
+                            { text: "利用實驗發現的數字規律來解題：" },
+                            { text: "$\\frac{1}{5} - \\frac{1}{6} = \\frac{1}{30}$", note: "利用 $5 \\times 6 = 30$ 直接找出括號內的答案。", rhetoric: { name: "乘積規律", desc: "$\\frac{1}{n} - \\frac{1}{n+1} = \\frac{1}{n(n+1)}$ 的規律應用。" } },
+                            { text: "，同理" },
+                            { text: "$\\frac{1}{6} - \\frac{1}{7} = \\frac{1}{42}$", note: "利用 $6 \\times 7 = 42$ 快速得出結果。" },
+                            { text: "。" }
+                        ]
+                    ]
+                },
+                {
+                    title: "探究四：下結論與素養學習表現 (問題4)",
+                    lines: [
+                        [
+                            { text: "總結學習表現" },
+                            { text: "n-III-4", note: "理解約分、擴分、通分的意義，並應用於異分母分數加減。", rhetoric: { name: "學習表現 n-III-4", desc: "N-5-4 異分母分數：用約分、擴分處理等值分數並做比較，養成利用約分化簡分數計算習慣。" } },
+                            { text: "，體會數學規律的奧祕與系統性思維。" }
+                        ]
+                    ]
+                }
+            ];
+
+            const [popoverInfo, setPopoverInfo] = useState({ show: false, data: null, left: 0, top: 0, isBottomHalf: false, arrowLeft: 0, width: 320 });
+
+            useEffect(() => {
+                const handleClickOutside = () => setPopoverInfo(prev => ({...prev, show: false}));
+                window.addEventListener('click', handleClickOutside);
+                return () => window.removeEventListener('click', handleClickOutside);
+            }, []);
+
+            const handleWordClick = (e, segment) => {
+                e.stopPropagation();
+                if (!segment.note && !segment.rhetoric) return;
+
+                const rect = e.currentTarget.getBoundingClientRect();
+                const isBottomHalf = rect.top > window.innerHeight / 2;
+                
+                const screenWidth = document.documentElement.clientWidth;
+                const margin = 16;
+                const calculatedWidth = Math.min(320, screenWidth - margin * 2); 
+                
+                let wordCenter = rect.left + rect.width / 2; 
+                let clampedLeft = Math.max(margin + calculatedWidth / 2, Math.min(screenWidth - calculatedWidth / 2 - margin, wordCenter));
+                const arrowRelativeLeft = wordCenter - (clampedLeft - calculatedWidth / 2);
+
+                setPopoverInfo({
+                    show: true,
+                    data: segment,
+                    left: clampedLeft,
+                    top: isBottomHalf ? window.scrollY + rect.top - 12 : window.scrollY + rect.bottom + 12,
+                    isBottomHalf: isBottomHalf,
+                    arrowLeft: arrowRelativeLeft,
+                    width: calculatedWidth
+                });
+            };
+
+            return (
+                <div className="max-w-4xl mx-auto pb-12 slide-up relative mt-4 md:mt-8 px-1">
+                    <div className="bg-white rounded-3xl p-5 md:p-12 shadow-xl border border-stone-100">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 border-b-2 border-stone-100 pb-5 gap-3">
+                            <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2 text-stone-800">
+                                <i className="ph-fill ph-book-open-text text-2xl md:text-3xl text-amber-600"></i> 單位分數的祕密重點導讀
+                            </h2>
+                            <div className="flex flex-wrap gap-2 text-[11px] md:text-sm">
+                                <span className="text-stone-600 bg-stone-100 px-2 py-1 md:px-3 md:py-1.5 rounded-full flex items-center gap-1.5 font-medium">
+                                    <span className="border-b-2 border-dashed border-stone-400 w-3 md:w-4 inline-block"></span> 數學專有名詞
+                                </span>
+                                <span className="text-purple-700 bg-purple-100 px-2 py-1 md:px-3 md:py-1.5 rounded-full flex items-center gap-1.5 font-medium">
+                                    <i className="ph-fill ph-magic-wand"></i> 素養探究原理
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-10">
+                            {mathData.map((section, sIdx) => (
+                                <div key={sIdx}>
+                                    <h3 className="text-xs md:text-sm font-bold text-stone-400 mb-4 tracking-widest bg-stone-50 inline-block px-3 py-1 rounded-lg border border-stone-200">
+                                        {section.title}
+                                    </h3>
+                                    <div className="text-[18px] md:text-[22px] text-stone-800 font-sans leading-[2.6] md:leading-[2.8] tracking-wide text-justify">
+                                        {section.lines.map((line, lIdx) => (
+                                            <span key={lIdx} className="block md:inline mr-1">
+                                                {line.map((segment, segIdx) => {
+                                                    const isInteractive = !!segment.note || !!segment.rhetoric;
+                                                    const isActive = popoverInfo.show && popoverInfo.data === segment;
+                                                    
+                                                    if (!isInteractive) return <span key={segIdx}>{segment.text}</span>;
+
+                                                    return (
+                                                        <span 
+                                                            key={segIdx}
+                                                            onClick={(e) => handleWordClick(e, segment)}
+                                                            className={`interactive-wrapper cursor-pointer inline-flex items-center ${isActive ? (segment.rhetoric ? 'active rhetoric-active' : 'active') : ''}`}
+                                                        >
+                                                            <span className={segment.note ? 'interactive-word' : 'rhetoric-word'}>
+                                                                {segment.text}
+                                                            </span>
+                                                            {segment.rhetoric && (
+                                                                <sup className="rhetoric-icon"><i className="ph-fill ph-magic-wand"></i></sup>
+                                                            )}
+                                                        </span>
+                                                    );
+                                                })}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {popoverInfo.show && popoverInfo.data && (
+                        <div 
+                            className={`absolute z-[100] ${popoverInfo.isBottomHalf ? 'tooltip-above arrow-down' : 'tooltip-below arrow-up'}`}
+                            style={{
+                                width: `${popoverInfo.width}px`,
+                                left: `${popoverInfo.left}px`,
+                                top: `${popoverInfo.top}px`,
+                                transform: 'translateX(-50%)',
+                                '--arrow-pos': `${popoverInfo.arrowLeft}px`
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="bg-[#2c2e33] text-stone-100 rounded-2xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)] border border-stone-600 p-4 md:p-5">
+                                <div className="mb-3 border-b border-stone-600 pb-2 md:pb-3 flex items-baseline gap-2 md:gap-3">
+                                    <span className="text-xl md:text-2xl font-sans text-amber-400 tracking-wider">{popoverInfo.data.text}</span>
+                                    {popoverInfo.data.pinyin && <span className="text-[10px] md:text-xs bg-stone-700 text-stone-300 px-2 py-1 rounded tracking-widest font-mono">{popoverInfo.data.pinyin}</span>}
+                                </div>
+                                
+                                <div className="space-y-3">
+                                    {popoverInfo.data.note && (
+                                        <div className="bg-stone-800/80 p-3 rounded-xl border-l-2 border-amber-500">
+                                            <div className="flex items-center gap-1 mb-1 text-amber-500 text-[11px] md:text-xs font-bold"><i className="ph-fill ph-book-open"></i> 名詞釋義</div>
+                                            <p className="text-[14px] md:text-base leading-relaxed text-stone-200">{popoverInfo.data.note}</p>
+                                        </div>
+                                    )}
+                                    
+                                    {popoverInfo.data.rhetoric && (
+                                        <div className="bg-purple-900/40 p-3 rounded-xl border-l-2 border-purple-500">
+                                            <div className="flex items-center gap-1 mb-2 text-purple-400 text-[11px] md:text-xs font-bold"><i className="ph-fill ph-magic-wand"></i> 素養原理</div>
+                                            <div className="inline-block bg-purple-600 text-white px-2 py-0.5 rounded text-[10px] md:text-xs font-bold mb-2">{popoverInfo.data.rhetoric.name}</div>
+                                            <p className="text-[14px] md:text-base leading-relaxed text-purple-100 whitespace-pre-line">{popoverInfo.data.rhetoric.desc}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('reading');
+
+            const renderContent = () => {
+                switch(activeTab) {
+                    case 'flashcard': return <FlashcardSection />;
+                    case 'reading': return <InteractiveReading />;
+                    default: return <InteractiveReading />;
+                }
+            };
+
+            return (
+                <div className="min-h-screen relative pb-10">
+                    <header className="bg-stone-900 text-stone-100 p-6 md:p-8 relative overflow-hidden z-10">
+                        <div className="absolute -top-10 -right-10 opacity-10">
+                            <i className="ph-fill ph-fraction text-[150px]"></i>
+                        </div>
+                        <div className="max-w-4xl mx-auto relative z-10 text-center md:text-left">
+                            <span className="bg-amber-600 text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full tracking-wider mb-2 md:mb-3 inline-block">112年度數學素養評量試題</span>
+                            <h1 className="text-2xl md:text-4xl font-black tracking-widest mb-1 md:mb-2 text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">
+                                單位分數的祕密
+                            </h1>
+                            <p className="text-stone-400 text-xs md:text-sm">設計者：張煥泉老師 ｜ 指導者：林素微教授 ｜ 五年級 n-III-4 學習表現</p>
+                        </div>
+                    </header>
+
+                    <div className="sticky top-0 z-[60] bg-white/90 backdrop-blur-md shadow-sm border-b border-stone-200 py-2.5 md:py-3">
+                        <nav className="max-w-[280px] md:max-w-[320px] mx-auto bg-stone-100 p-1.5 rounded-2xl relative flex">
+                            <div className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white rounded-xl shadow transition-transform duration-300 ease-in-out z-0"
+                                 style={{ transform: `translateX(${activeTab === 'reading' ? '0%' : '100%'})`, left: activeTab === 'reading' ? '6px' : '12px' }}>
+                            </div>
+
+                            <button onClick={() => setActiveTab('reading')} className={`flex-1 py-1.5 md:py-2 rounded-xl transition-colors relative z-10 flex items-center justify-center gap-1.5 md:gap-2 ${activeTab === 'reading' ? 'text-amber-700 font-bold' : 'text-stone-500 hover:text-amber-600'}`}>
+                                <i className="ph-fill ph-book-open-text text-base md:text-lg"></i>
+                                <span className="text-[13px] md:text-sm tracking-wide font-bold">重點導讀</span>
+                            </button>
+
+                            <button onClick={() => setActiveTab('flashcard')} className={`flex-1 py-1.5 md:py-2 rounded-xl transition-colors relative z-10 flex items-center justify-center gap-1.5 md:gap-2 ${activeTab === 'flashcard' ? 'text-amber-700 font-bold' : 'text-stone-500 hover:text-amber-600'}`}>
+                                <i className="ph-fill ph-cards text-base md:text-lg"></i>
+                                <span className="text-[13px] md:text-sm tracking-wide font-bold">核心翻卡</span>
+                            </button>
+                        </nav>
+                    </div>
+
+                    <main className="p-2 md:p-8 max-w-6xl mx-auto">
+                        {renderContent()}
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
